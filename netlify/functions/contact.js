@@ -103,7 +103,6 @@ export async function handler(event) {
       to,
       subject,
       text,
-      replyTo: email,
     });
 
     return json(200, { ok: true });
