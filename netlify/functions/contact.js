@@ -66,9 +66,14 @@ export async function handler(event) {
     const from = requiredEnv("MAIL_FROM");
     // Support both MAIL_* (DaouOffice docs) and SMTP_* (generic naming).
     const host = envFirst("MAIL_HOST", "SMTP_HOST");
-    const port = Number(envFirst("MAIL_PORT", "SMTP_PORT"));
+    const portRaw = envFirst("MAIL_PORT", "SMTP_PORT");
     const user = envFirst("MAIL_USER", "SMTP_USER");
     const pass = envFirst("MAIL_PASSWORD", "SMTP_PASS");
+
+    const port = Number(portRaw);
+    if (!Number.isFinite(port)) {
+      return json(500, { ok: false, error: "INVALID_SMTP_PORT", details: { portRaw } });
+    }
 
     const transporter = nodemailer.createTransport({
       host,
@@ -113,7 +118,14 @@ export async function handler(event) {
       responseCode: err?.responseCode,
       command: err?.command,
     });
-    return json(500, { ok: false, error: "SEND_FAILED", code });
+    const details = {
+      // Helpful for debugging in-browser when platform logs aren't visible.
+      code,
+      responseCode: err?.responseCode,
+      command: err?.command,
+      message: typeof message === "string" ? message.slice(0, 300) : undefined,
+    };
+    return json(500, { ok: false, error: "SEND_FAILED", ...details });
   }
 }
 
