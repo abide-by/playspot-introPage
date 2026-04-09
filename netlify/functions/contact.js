@@ -13,6 +13,25 @@ function json(statusCode, body) {
 
 const MAX_MESSAGE_LENGTH = 4000;
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatIsoLocal(iso) {
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  } catch {
+    return iso;
+  }
+}
+
 function requiredEnv(name) {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env var: ${name}`);
@@ -83,6 +102,7 @@ export async function handler(event) {
     });
 
     const subject = `[PLAY SPOT] 창업 문의 - ${name}${company ? ` (${company})` : ""}`;
+    const sentAt = new Date().toISOString();
 
     const text = [
       `이름: ${name}`,
@@ -93,16 +113,72 @@ export async function handler(event) {
       "문의 내용:",
       message,
       "",
-      `Sent at: ${new Date().toISOString()}`,
+      `Sent at: ${sentAt}`,
     ]
       .filter(Boolean)
       .join("\n");
+
+    const html = `<!doctype html>
+<html>
+  <body style="margin:0;padding:0;background:#f6f7fb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+    <div style="max-width:720px;margin:0 auto;padding:24px;">
+      <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,0.05);">
+        <div style="padding:18px 20px;background:linear-gradient(135deg,#111827,#334155);color:#ffffff;">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;opacity:0.85;">PLAY SPOT</div>
+          <div style="margin-top:6px;font-size:18px;font-weight:700;">창업 문의가 도착했습니다</div>
+        </div>
+
+        <div style="padding:20px;">
+          <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:separate;border-spacing:0 10px;">
+            <tr>
+              <td style="width:120px;color:#6b7280;font-size:13px;">이름</td>
+              <td style="font-size:14px;font-weight:600;">${escapeHtml(name)}</td>
+            </tr>
+            ${
+              company
+                ? `<tr>
+              <td style="width:120px;color:#6b7280;font-size:13px;">회사/브랜드</td>
+              <td style="font-size:14px;font-weight:600;">${escapeHtml(company)}</td>
+            </tr>`
+                : ""
+            }
+            <tr>
+              <td style="width:120px;color:#6b7280;font-size:13px;">이메일</td>
+              <td style="font-size:14px;"><a href="mailto:${escapeHtml(email)}" style="color:#2563eb;text-decoration:none;">${escapeHtml(
+                email,
+              )}</a></td>
+            </tr>
+            ${
+              phone
+                ? `<tr>
+              <td style="width:120px;color:#6b7280;font-size:13px;">연락처</td>
+              <td style="font-size:14px;">${escapeHtml(phone)}</td>
+            </tr>`
+                : ""
+            }
+            <tr>
+              <td style="width:120px;color:#6b7280;font-size:13px;vertical-align:top;padding-top:6px;">문의 내용</td>
+              <td style="font-size:14px;line-height:1.6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;white-space:pre-wrap;">${escapeHtml(
+                message,
+              )}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="padding:14px 20px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;">
+          Sent at: ${escapeHtml(formatIsoLocal(sentAt))} (KST)
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
 
     await transporter.sendMail({
       from,
       to,
       subject,
       text,
+      html,
     });
 
     return json(200, { ok: true });
