@@ -31,6 +31,15 @@ const Navbar = () => {
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
+
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-md md:bg-background/80 md:backdrop-blur-xl">
@@ -63,7 +72,7 @@ const Navbar = () => {
               Contact
             </motion.a>
             <button
-              className="md:hidden flex items-center justify-center p-2 text-foreground -mr-2"
+              className="md:hidden -mr-2 inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-foreground backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.18)] hover:bg-white/15"
               onClick={() => setIsOpen(!isOpen)}
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -75,39 +84,66 @@ const Navbar = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 top-[56px] z-40 bg-background/95 backdrop-blur-md md:hidden flex flex-col items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 top-[56px] z-40 md:hidden"
+            role="dialog"
+            aria-modal="true"
           >
-            <div className="flex flex-col items-center gap-10 mb-20">
-              {navLinks.map((link, i) => (
-                <motion.a
-                  key={link.name}
-                  href={link.href}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  transition={{ delay: i * 0.1 }}
-                  onClick={() => setIsOpen(false)}
-                  className="text-2xl font-semibold text-foreground tracking-tight"
-                >
-                  {link.name}
-                </motion.a>
-              ))}
-              <motion.a
-                href="#contact"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 20 }}
-                transition={{ delay: navLinks.length * 0.1 }}
-                onClick={() => setIsOpen(false)}
-                className="mt-4 px-8 py-3 rounded-full bg-primary text-primary-foreground font-semibold text-lg"
-              >
-                Contact us
-              </motion.a>
-            </div>
+            {/* Left: gradient dim (keeps background partially visible) */}
+            <button
+              type="button"
+              aria-label="Close menu"
+              className="absolute inset-0 bg-gradient-to-l from-black/60 via-black/20 to-transparent"
+              onClick={() => setIsOpen(false)}
+            />
+
+            {/* Right: half drawer */}
+            <motion.aside
+              initial={{ x: 24, opacity: 0.98 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 24, opacity: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="absolute right-0 top-0 h-full w-[min(50vw,18rem)] min-w-[14rem] max-w-[20rem] border-l border-white/15 bg-white/10 backdrop-blur-2xl shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
+            >
+              <div className="relative h-full overflow-y-auto px-6 py-6">
+                {/* glass highlight */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/12 via-white/6 to-transparent" />
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold tracking-wide text-white/80">MENU</span>
+                </div>
+
+                <div className="relative mt-6 flex flex-col gap-3">
+                  {navLinks.map((link, i) => (
+                    <motion.a
+                      key={link.name}
+                      href={link.href}
+                      initial={{ opacity: 0, x: 8 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: 8 }}
+                      transition={{ delay: i * 0.04 }}
+                      onClick={() => setIsOpen(false)}
+                      className="rounded-lg px-3 py-2 text-base font-semibold tracking-tight text-white/90 hover:text-white hover:bg-white/12"
+                    >
+                      {link.name}
+                    </motion.a>
+                  ))}
+                  <motion.a
+                    href="#contact"
+                    initial={{ opacity: 0, x: 8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 8 }}
+                    transition={{ delay: navLinks.length * 0.04 + 0.04 }}
+                    onClick={() => setIsOpen(false)}
+                    className="mt-3 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/12 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_10px_30px_rgba(0,0,0,0.22)] hover:bg-white/16"
+                  >
+                    Contact us
+                  </motion.a>
+                </div>
+              </div>
+            </motion.aside>
           </motion.div>
         )}
       </AnimatePresence>

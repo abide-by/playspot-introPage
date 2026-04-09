@@ -231,11 +231,6 @@ const IntellectualPropertySection = () => {
           aria-label={coarseOrNarrow ? "등록증 흐름 멈추기 또는 다시 재생" : undefined}
           aria-pressed={coarseOrNarrow ? tapPaused : undefined}
         >
-          {coarseOrNarrow && (
-            <p className="mb-2 text-center text-xs text-muted-foreground" aria-hidden="true">
-              탭하여 멈춤 · 다시 탭하면 재생
-            </p>
-          )}
           <div
             className="overflow-hidden"
             style={{

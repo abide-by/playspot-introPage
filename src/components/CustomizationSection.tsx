@@ -11,7 +11,7 @@ import machine7 from "@/assets/machine7.png";
 import machine8 from "@/assets/machine8.png";
 
 /** 필터 탭 (All 제외 값은 아이템의 category와 동일) */
-export type CustomizationFilter = "All" | "Museum & Art" | "Beauty & Fashion" | "Entertainment";
+export type CustomizationFilter = "All" | "Museum & Art" | "Beauty & Fashion" | "Entertainment" | "Etc";
 
 export type CustomizationCategory = Exclude<CustomizationFilter, "All">;
 
@@ -27,10 +27,12 @@ const FILTER_TABS: CustomizationFilter[] = [
   "Museum & Art",
   "Beauty & Fashion",
   "Entertainment",
+  "Etc",
 ];
 
 const customizationMachines: CustomizationMachineItem[] = [
-  { id: 1, imageSrc: machine1, category: "Entertainment", caption: "K-POP & 캐릭터 에디션" },
+  // machine1 is a sushi-related image; keep it separate from K-POP/character editions.
+  { id: 1, imageSrc: machine1, category: "Etc", caption: "푸드 피규어" },
   { id: 2, imageSrc: machine2, category: "Beauty & Fashion", caption: "코스메틱 브랜드 콜라보" },
   { id: 3, imageSrc: machine3, category: "Beauty & Fashion", caption: "코스메틱 브랜드 콜라보" },
   { id: 4, imageSrc: machine4, category: "Entertainment", caption: "K-POP & 캐릭터 에디션" },

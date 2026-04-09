@@ -13,9 +13,20 @@ import wmRemote from "@/assets/wmRemote.png";
 const watermarkLayoutClass =
   "right-[-6%] bottom-[-14%] w-48 h-56 sm:w-52 sm:h-64 md:w-56 md:h-[17rem]";
 
-/** 원본 PNG 우측 밝은 띠·보더 근처 하이라이트 완화 (카드는 overflow-hidden으로 클립) */
+/** 워터마크 배치 미세 보정 */
 const watermarkEdgeTrimClass =
-  "origin-bottom-right scale-[1.02] translate-x-0.5 [clip-path:inset(0_2px_0_0)]";
+  "origin-bottom-right scale-[1.02] translate-x-0.5";
+
+/** 워터마크가 너무 흐려 보이지 않도록 약간의 선명도 보정 */
+const watermarkEnhanceClass = "contrast-[1.18] brightness-[1.08] saturate-[1.05]";
+
+/**
+ * 워터마크 가장자리 경계가 보이지 않도록 페더(마스크) 처리.
+ * 여러 마스크 합성은 브라우저별 동작이 달라서, 라디얼 마스크 1개로만 페더 처리한다.
+ * (우하단 기준으로 바깥쪽으로 갈수록 자연스럽게 투명)
+ */
+const watermarkFeatherMask =
+  "radial-gradient(farthest-side at 92% 120%, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 68%, rgba(0,0,0,0) 100%)";
 
 const cards = [
   {
@@ -26,7 +37,7 @@ const cards = [
     watermarkSrc: wmHopper,
     watermarkLayoutClass,
     /** 원본이 밝은 편이라 UI·원격보다만 살짝 높임 */
-    watermarkOpacityClass: "opacity-30",
+    watermarkOpacityClass: "opacity-50",
   },
   {
     icon: MonitorSmartphone,
@@ -35,7 +46,7 @@ const cards = [
       "결제부터 토출까지 작동 단계에 맞춰 반응하는 캐릭터 애니메이션과 맞춤형 BGM을 지원합니다.",
     watermarkSrc: wmUI,
     watermarkLayoutClass,
-    watermarkOpacityClass: "opacity-20",
+    watermarkOpacityClass: "opacity-25",
   },
   {
     icon: Wifi,
@@ -44,7 +55,7 @@ const cards = [
       "웹과 모바일을 통해 언제 어디서든 실시간 재고 파악 및 기기 상태 원격 모니터링이 가능합니다.",
     watermarkSrc: wmRemote,
     watermarkLayoutClass,
-    watermarkOpacityClass: "opacity-20",
+    watermarkOpacityClass: "opacity-25",
   },
 ] as const;
 
@@ -81,7 +92,15 @@ const TechGlassCard = ({
           src={card.watermarkSrc}
           alt=""
           aria-hidden="true"
-          className={`absolute pointer-events-none select-none z-0 object-contain object-right-bottom border-0 ${watermarkEdgeTrimClass} ${card.watermarkOpacityClass} ${card.watermarkLayoutClass}`}
+          className={`absolute pointer-events-none select-none z-0 object-contain object-right-bottom border-0 ${watermarkEdgeTrimClass} ${watermarkEnhanceClass} ${card.watermarkOpacityClass} ${card.watermarkLayoutClass}`}
+          style={{
+            WebkitMaskImage: watermarkFeatherMask,
+            maskImage: watermarkFeatherMask,
+            WebkitMaskRepeat: "no-repeat",
+            maskRepeat: "no-repeat",
+            WebkitMaskSize: "100% 100%",
+            maskSize: "100% 100%",
+          }}
           loading="lazy"
           decoding="async"
         />
