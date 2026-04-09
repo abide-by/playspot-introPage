@@ -103,8 +103,17 @@ export async function handler(event) {
 
     return json(200, { ok: true });
   } catch (err) {
-    console.error(err);
-    return json(500, { ok: false, error: "SEND_FAILED" });
+    const code = err?.code || err?.name;
+    const message = err?.message;
+    // Avoid leaking secrets, but keep enough to debug SMTP failures.
+    console.error("contact function failed", {
+      code,
+      message,
+      response: err?.response,
+      responseCode: err?.responseCode,
+      command: err?.command,
+    });
+    return json(500, { ok: false, error: "SEND_FAILED", code });
   }
 }
 
