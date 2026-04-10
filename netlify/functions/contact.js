@@ -46,6 +46,15 @@ function envFirst(...names) {
   throw new Error(`Missing env var: ${names.join(" or ")}`);
 }
 
+/** Split MAIL_TO; one SMTP send per address (works when multi-To in one message is blocked). */
+function parseRecipientList(raw) {
+  return String(raw)
+    .split(/[,;]/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .filter((addr) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr));
+}
+
 export async function handler(event) {
   if (event.httpMethod !== "POST") {
     return {
@@ -81,7 +90,15 @@ export async function handler(event) {
   }
 
   try {
-    const to = requiredEnv("MAIL_TO");
+    const mailToRaw = requiredEnv("MAIL_TO");
+    const recipients = parseRecipientList(mailToRaw);
+    if (recipients.length === 0) {
+      return json(500, {
+        ok: false,
+        error: "INVALID_MAIL_TO",
+        details: { hint: "Set MAIL_TO to one or more addresses, separated by commas." },
+      });
+    }
     const from = requiredEnv("MAIL_FROM");
     // Support both MAIL_* (DaouOffice docs) and SMTP_* (generic naming).
     const host = envFirst("MAIL_HOST", "SMTP_HOST");
@@ -173,13 +190,15 @@ export async function handler(event) {
   </body>
 </html>`;
 
-    await transporter.sendMail({
-      from,
-      to,
-      subject,
-      text,
-      html,
-    });
+    for (const to of recipients) {
+      await transporter.sendMail({
+        from,
+        to,
+        subject,
+        text,
+        html,
+      });
+    }
 
     return json(200, { ok: true });
   } catch (err) {
