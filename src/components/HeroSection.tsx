@@ -150,12 +150,11 @@ const HeroSection = () => {
           initial={{ opacity: 0, y: 80 }}
           animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 80 }}
           transition={{ duration: 0.8, delay: 0.4, ease: "easeOut" }}
-          className="text-5xl md:text-7xl lg:text-[5.5rem] font-semibold tracking-tight mb-4"
+          className="font-semibold tracking-tight mb-4"
           style={{ lineHeight: 1.2 }}
         >
-          Spin Your Life,
-          <br />
-          <span className="text-gradient">PLAY SPOT</span>
+          <span className="block text-4xl md:text-6xl lg:text-[4.6rem]">Spin Your Life,</span>
+          <span className="block text-gradient text-5xl md:text-7xl lg:text-[5.1rem]">PLAY SPOT</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 60 }}
