@@ -1,6 +1,7 @@
 import { lazy, Suspense, useLayoutEffect, useEffect } from "react";
 import HeroSection from "@/components/HeroSection";
 import FooterSection, { Navbar } from "@/components/FooterSection";
+import SectionDotNav from "@/components/SectionDotNav";
 
 const VisionSection = lazy(() => import("@/components/VisionSection"));
 const CoreTechnology = lazy(() => import("@/components/CoreTechnology"));
@@ -24,6 +25,7 @@ const Index = () => {
   return (
     <div className="overflow-x-hidden">
       <Navbar />
+      <SectionDotNav />
       <HeroSection />
       <Suspense fallback={null}>
         <VisionSection />
