@@ -1,5 +1,6 @@
-import { motion, useInView } from "framer-motion";
-import { useRef, useState } from "react";
+import { motion, useInView, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 import logoImg from "@/assets/playspot-logo.png";
 import playcubeTextLogo from "@/assets/playcube-text-logo.png";
 import { useReducedVisualEffects } from "@/hooks/use-reduced-visual-effects";
@@ -8,28 +9,117 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
+const navLinks = [
+  { name: "Home", href: "#home" },
+  { name: "Vision", href: "#vision" },
+  { name: "Core Technology", href: "#core-technology" },
+  { name: "Smart Management", href: "#smart-management" },
+  { name: "Customization", href: "#customization" },
+  { name: "Intellectual Property", href: "#intellectual-property" },
+  { name: "Tech Specs", href: "#tech-specs" },
+] as const;
+
 const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const reducedEffects = useReducedVisualEffects();
 
+  useEffect(() => {
+    if (!isOpen) return;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen]);
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-md md:bg-background/80 md:backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto grid min-h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 py-2 px-4 sm:px-6">
-        <div />
-        <a href="#home" className="mx-auto flex-shrink-0">
-          <img src={logoImg} alt="PLAY SPOT" className="h-6" />
-        </a>
-        <div className="flex justify-end">
-          <motion.a
-            href="#contact"
-            whileHover={reducedEffects ? undefined : { scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex text-xs sm:text-sm font-medium text-primary hover:opacity-80 transition-opacity whitespace-nowrap"
-          >
-            창업 문의
-          </motion.a>
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-md md:bg-background/80 md:backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto grid min-h-14 grid-cols-[1fr_auto_1fr] items-center gap-3 py-2 px-4 sm:px-6">
+          <div className="flex items-center md:hidden">
+            <button
+              type="button"
+              aria-label={isOpen ? "메뉴 닫기" : "메뉴 열기"}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-border/60 bg-background/85 text-foreground shadow-sm"
+              onClick={() => setIsOpen((prev) => !prev)}
+            >
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+          </div>
+
+          <a href="#home" className="mx-auto flex-shrink-0" onClick={() => setIsOpen(false)}>
+            <img src={logoImg} alt="PLAY SPOT" className="h-6" />
+          </a>
+
+          <div className="flex justify-end">
+            <motion.a
+              href="#contact"
+              whileHover={reducedEffects ? undefined : { scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="hidden md:inline-flex text-xs sm:text-sm font-medium text-primary hover:opacity-80 transition-opacity whitespace-nowrap"
+            >
+              창업 문의
+            </motion.a>
+          </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 top-[56px] z-40 md:hidden"
+            role="dialog"
+            aria-modal="true"
+          >
+            <button
+              type="button"
+              aria-label="메뉴 닫기"
+              className="absolute inset-0 bg-black/30"
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: 24, opacity: 0.98 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 24, opacity: 0.98 }}
+              transition={{ duration: 0.18 }}
+              className="absolute right-0 top-0 h-full w-[min(70vw,18rem)] border-l border-border bg-background/95 px-5 py-5 backdrop-blur-xl"
+            >
+              <div className="flex flex-col gap-2">
+                {navLinks.map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-lg px-3 py-2 text-sm font-semibold text-foreground/90 hover:bg-muted"
+                  >
+                    {link.name}
+                  </a>
+                ))}
+                <a
+                  href="#contact"
+                  onClick={() => setIsOpen(false)}
+                  className="mt-2 inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground"
+                >
+                  창업 문의
+                </a>
+              </div>
+            </motion.aside>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
