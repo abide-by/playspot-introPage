@@ -222,16 +222,30 @@ const FooterSection = () => {
             <img src={playcubeTextLogo} alt="PLAYCUBE" className="h-[1.1em] object-contain translate-y-px" />
             <span>창업에 대해 궁금하신 점이 있다면 언제든 문의해 주세요.</span>
           </motion.div>
-          <motion.button
+          <motion.div
             variants={fadeUp}
-            type="button"
-            whileHover={reducedEffects ? undefined : { scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-lg hover:shadow-primary/25"
-            onClick={() => setContactOpen(true)}
+            className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-center"
           >
-            창업 문의하기
-          </motion.button>
+            <motion.button
+              type="button"
+              whileHover={reducedEffects ? undefined : { scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-lg hover:shadow-primary/25"
+              onClick={() => setContactOpen(true)}
+            >
+              창업 문의하기
+            </motion.button>
+            <motion.a
+              href="https://playspot-guide.pages.dev/"
+              target="_blank"
+              rel="noopener noreferrer"
+              whileHover={reducedEffects ? undefined : { scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="inline-flex h-12 items-center justify-center rounded-full border border-primary/35 bg-background px-8 text-sm font-semibold text-primary transition-shadow hover:border-primary/50 hover:bg-primary/5 hover:shadow-lg"
+            >
+              창업 가이드 바로가기
+            </motion.a>
+          </motion.div>
         </motion.div>
       </section>
 
