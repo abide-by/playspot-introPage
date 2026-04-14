@@ -19,7 +19,10 @@ function escapeHtml(s) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
+    .replace(/'/g, "&#39;")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\n/g, "<br />");
 }
 
 function formatIsoLocal(iso) {
@@ -175,7 +178,7 @@ export async function handler(event) {
             }
             <tr>
               <td style="width:120px;color:#6b7280;font-size:13px;vertical-align:top;padding-top:6px;">문의 내용</td>
-              <td style="font-size:14px;line-height:1.6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;white-space:pre-wrap;">${escapeHtml(
+              <td style="font-size:14px;line-height:1.6;background:#f9fafb;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;">${escapeHtml(
                 message,
               )}</td>
             </tr>

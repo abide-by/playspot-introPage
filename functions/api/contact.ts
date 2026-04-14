@@ -51,14 +51,6 @@ const escapeHtml = (s: string) =>
     .replace(/"/g, "&quot;")
     .replace(/\n/g, "<br />");
 
-/** 줄바꿈·띄어쓰기 유지(메일 본문용). HTML 이스케이프만 하고 &lt;br&gt; 대신 pre-wrap 사용 */
-const escapeHtmlPreformatted = (s: string) =>
-  normalizeNewlines(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
 /** 메일 본문 강조색·아이콘 (Lucide Mail 스타일 SVG에 동일 적용) */
@@ -141,7 +133,7 @@ const buildInquiryEmailHtml = (
                 <tr>
                   <td colspan="2" style="padding:16px 20px 20px 20px;">
                     <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;padding-left:4px;">문의 내용</p>
-                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:${CARD};padding:16px 18px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
+                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:${CARD};padding:16px 18px;border:1px solid ${BORDER};word-break:break-word;overflow-wrap:anywhere;">${escapeHtml(message)}</div>
                   </td>
                 </tr>
               </table>
