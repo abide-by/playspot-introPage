@@ -70,12 +70,12 @@ const MUTED = "#64748b";
 const TEXT = "#0f172a";
 const BOX_BG = "#fdf8fa";
 
-/** Lucide `Mail` 아이콘과 동일한 실루엣 (이메일용 인라인 SVG) */
-const mailIconSvg = (color: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" role="img" aria-hidden="true" style="display:inline-block;vertical-align:-5px;margin-left:10px;">
-  <rect width="20" height="16" x="2" y="4" rx="2" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>`;
+/** 인라인 SVG를 data URI로 넣어 &lt;img&gt;로 표시 (본문 인라인 SVG는 많은 클라이언트에서 제거됨) */
+const MAIL_ICON_DATA_URI =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><rect width="20" height="16" x="2" y="4" rx="2" stroke="#FF1C5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="#FF1C5C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  );
 
 const buildInquiryEmailHtml = (
   fields: {
@@ -86,6 +86,7 @@ const buildInquiryEmailHtml = (
     message: string;
   },
   logoUrl: string | null,
+  mailIconSrc: string,
 ) => {
   const { name, email, company, phone, message } = fields;
   const row = (label: string, value: string) => `
@@ -114,7 +115,9 @@ const buildInquiryEmailHtml = (
           <tr>
             <td style="padding:22px 28px 22px 28px;background:linear-gradient(180deg,#fffafc 0%,${CARD} 48%);border-bottom:1px solid ${BORDER};">
               ${headerBrand}
-              <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;color:${ACCENT};font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다${mailIconSvg(ACCENT)}</h1>
+              <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">
+                <span style="color:${TEXT};">새 </span><span style="color:${ACCENT};">창업 문의</span><span style="color:${TEXT};">가 도착했습니다</span><img src="${escapeAttr(mailIconSrc)}" alt="" width="26" height="22" style="display:inline-block;vertical-align:-4px;margin-left:10px;border:0;outline:none;" />
+              </h1>
             </td>
           </tr>
           <tr>
@@ -166,13 +169,35 @@ const parseRecipients = (raw: string) =>
     .filter((s) => s.length > 0)
     .filter((s) => isValidEmail(s));
 
-/** public/playspot-logo.png 가 사이트 루트에 올라가 있어야 함 */
+/** 로고·편지 아이콘 등 정적 파일의 origin (SITE_URL 또는 MAIL_LOGO_URL에서 유도) */
+function resolveSiteBase(env: Env): string | null {
+  const baseRaw = (env.SITE_URL || env.PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
+  if (baseRaw && /^https?:\/\//i.test(baseRaw)) return baseRaw;
+  const custom = (env.MAIL_LOGO_URL ?? "").trim();
+  if (custom && /^https?:\/\//i.test(custom)) {
+    try {
+      return new URL(custom).origin;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** public/playspot-logo.png */
 function resolveMailLogoUrl(env: Env): string | null {
   const custom = (env.MAIL_LOGO_URL ?? "").trim();
   if (custom && /^https?:\/\//i.test(custom)) return custom;
-  const base = (env.SITE_URL || env.PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
-  if (base && /^https?:\/\//i.test(base)) return `${base}/playspot-logo.png`;
+  const base = resolveSiteBase(env);
+  if (base) return `${base}/playspot-logo.png`;
   return null;
+}
+
+/** public/email-envelope.svg — 없으면 data URI 아이콘 */
+function resolveMailIconSrc(env: Env): string {
+  const base = resolveSiteBase(env);
+  if (base) return `${base}/email-envelope.svg`;
+  return MAIL_ICON_DATA_URI;
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
@@ -229,6 +254,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     ].join("\n");
 
     const mailLogoUrl = resolveMailLogoUrl(env);
+    const mailIconSrc = resolveMailIconSrc(env);
     const html = buildInquiryEmailHtml(
       {
         name,
@@ -238,6 +264,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         message,
       },
       mailLogoUrl,
+      mailIconSrc,
     );
 
     const resendRes = await fetch("https://api.resend.com/emails", {
