@@ -61,14 +61,21 @@ const escapeHtmlPreformatted = (s: string) =>
 
 const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 
-/** Brand + light theme (메일 클라이언트 호환 인라인 스타일) */
-const BRAND = "#E42475";
-const BG_PAGE = "#eef2f7";
+/** 메일 본문 강조색·아이콘 (Lucide Mail 스타일 SVG에 동일 적용) */
+const ACCENT = "#FF1C5C";
+const BG_PAGE = "#f2eef1";
 const CARD = "#ffffff";
-const BORDER = "#e2e8f0";
+const BORDER = "#e8e0e4";
 const MUTED = "#64748b";
 const TEXT = "#0f172a";
-const BOX_BG = "#f8fafc";
+const BOX_BG = "#fdf8fa";
+
+/** Lucide `Mail` 아이콘과 동일한 실루엣 (이메일용 인라인 SVG) */
+const mailIconSvg = (color: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" role="img" aria-hidden="true" style="display:inline-block;vertical-align:-5px;margin-left:10px;">
+  <rect width="20" height="16" x="2" y="4" rx="2" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
 
 const buildInquiryEmailHtml = (
   fields: {
@@ -90,7 +97,7 @@ const buildInquiryEmailHtml = (
   const headerBrand =
     logoUrl && /^https?:\/\//i.test(logoUrl)
       ? `<img src="${escapeAttr(logoUrl)}" alt="PLAY SPOT" width="120" style="display:block;border:0;outline:none;text-decoration:none;width:120px;max-width:120px;height:auto;" />`
-      : `<p style="margin:0;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:${BRAND};font-family:'Noto Sans KR',sans-serif;font-weight:700;">PLAY SPOT</p>`;
+      : `<p style="margin:0;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:${ACCENT};font-family:'Noto Sans KR',sans-serif;font-weight:700;">PLAY SPOT</p>`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -103,17 +110,17 @@ const buildInquiryEmailHtml = (
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BG_PAGE};padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};border-top:3px solid ${ACCENT};background:${CARD};box-shadow:0 4px 28px rgba(255,28,92,0.07),0 2px 12px rgba(15,23,42,0.05);">
           <tr>
-            <td style="padding:22px 28px 22px 28px;background:${CARD};border-bottom:1px solid ${BORDER};">
+            <td style="padding:22px 28px 22px 28px;background:linear-gradient(180deg,#fffafc 0%,${CARD} 48%);border-bottom:1px solid ${BORDER};">
               ${headerBrand}
-              <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;color:${BRAND};font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다</h1>
+              <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;color:${ACCENT};font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다${mailIconSvg(ACCENT)}</h1>
             </td>
           </tr>
           <tr>
             <td style="padding:8px 28px 0 28px;background:${CARD};">
               <p style="margin:20px 0 8px 0;font-size:14px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;line-height:1.6;">
-                문의 폼이 제출되었습니다. 이 메일에 <strong style="color:${BRAND};">답장</strong>하면 문의자 이메일로 바로 회신됩니다.
+                문의 폼이 제출되었습니다. 이 메일에 <strong style="color:${ACCENT};">답장</strong>하면 문의자 이메일로 바로 회신됩니다.
               </p>
             </td>
           </tr>
@@ -122,7 +129,7 @@ const buildInquiryEmailHtml = (
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px;border-radius:12px;background:${BOX_BG};border:1px solid ${BORDER};">
                 ${row("이름", escapeHtml(name))}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};height:0;padding:0;"></td></tr>
-                ${row("이메일", `<a href="mailto:${escapeHtml(email)}" style="color:${BRAND};text-decoration:none;font-weight:600;">${escapeHtml(email)}</a>`)}
+                ${row("이메일", `<a href="mailto:${escapeHtml(email)}" style="color:${ACCENT};text-decoration:none;font-weight:600;">${escapeHtml(email)}</a>`)}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};"></td></tr>
                 ${row("회사/브랜드", escapeHtml(company))}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};"></td></tr>
@@ -131,7 +138,7 @@ const buildInquiryEmailHtml = (
                 <tr>
                   <td colspan="2" style="padding:16px 20px 20px 20px;">
                     <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;padding-left:4px;">문의 내용</p>
-                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#ffffff;padding:16px 18px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
+                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#fffefd;padding:16px 18px;border:1px solid rgba(255,28,92,0.14);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
                   </td>
                 </tr>
               </table>
