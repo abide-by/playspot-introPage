@@ -63,9 +63,9 @@ const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;
 
 /** 메일 본문 강조색·아이콘 (Lucide Mail 스타일 SVG에 동일 적용) */
 const ACCENT = "#FF1C5C";
-const BG_PAGE = "#ffffff";
+const BG_PAGE = "#f2eef1";
 const CARD = "#ffffff";
-const BORDER = "#e8e8ec";
+const BORDER = "#e8e0e4";
 const MUTED = "#64748b";
 const TEXT = "#0f172a";
 const BOX_BG = "#fdf8fa";
