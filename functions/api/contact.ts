@@ -54,13 +54,14 @@ const escapeHtmlPreformatted = (s: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
-/** Brand: matches site primary ~ hsl(340, 82%, 52%) */
+/** Brand + light theme (메일 클라이언트 호환 인라인 스타일) */
 const BRAND = "#E42475";
-const BRAND_DIM = "#F9A8D4";
-const BG = "#0f0f12";
-const CARD = "#1a1a1f";
-const MUTED = "#9ca3af";
-const BORDER = "rgba(255,255,255,0.08)";
+const BG_PAGE = "#eef2f7";
+const CARD = "#ffffff";
+const BORDER = "#e2e8f0";
+const MUTED = "#64748b";
+const TEXT = "#0f172a";
+const BOX_BG = "#f8fafc";
 
 const buildInquiryEmailHtml = (fields: {
   name: string;
@@ -73,7 +74,7 @@ const buildInquiryEmailHtml = (fields: {
   const row = (label: string, value: string) => `
   <tr>
     <td style="padding:12px 16px 12px 0;vertical-align:top;font-size:13px;color:${MUTED};width:120px;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;">${label}</td>
-    <td style="padding:12px 0;font-size:15px;color:#f4f4f5;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;">${value}</td>
+    <td style="padding:12px 0;font-size:15px;color:${TEXT};font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;">${value}</td>
   </tr>`;
 
   return `<!DOCTYPE html>
@@ -83,30 +84,30 @@ const buildInquiryEmailHtml = (fields: {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>창업 문의</title>
 </head>
-<body style="margin:0;padding:0;background:${BG};">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BG};padding:32px 16px;">
+<body style="margin:0;padding:0;background:${BG_PAGE};">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BG_PAGE};padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};box-shadow:0 4px 24px rgba(15,23,42,0.06);">
           <tr>
             <td style="padding:28px 28px 20px 28px;background:linear-gradient(135deg,${BRAND} 0%,#b91c5c 100%);">
-              <p style="margin:0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.85);font-family:'Noto Sans KR',sans-serif;">PLAY SPOT</p>
+              <p style="margin:0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.9);font-family:'Noto Sans KR',sans-serif;">PLAY SPOT</p>
               <h1 style="margin:8px 0 0 0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.3;">새 창업 문의가 도착했습니다</h1>
             </td>
           </tr>
           <tr>
-            <td style="padding:8px 28px 0 28px;">
+            <td style="padding:8px 28px 0 28px;background:${CARD};">
               <p style="margin:20px 0 8px 0;font-size:14px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;line-height:1.6;">
-                문의 폼이 제출되었습니다. 이 메일에 <strong style="color:${BRAND_DIM};">답장</strong>하면 문의자 이메일로 바로 회신됩니다.
+                문의 폼이 제출되었습니다. 이 메일에 <strong style="color:${BRAND};">답장</strong>하면 문의자 이메일로 바로 회신됩니다.
               </p>
             </td>
           </tr>
           <tr>
-            <td style="padding:8px 28px 28px 28px;">
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px;border-radius:12px;background:rgba(255,255,255,0.03);border:1px solid ${BORDER};">
+            <td style="padding:8px 28px 28px 28px;background:${CARD};">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px;border-radius:12px;background:${BOX_BG};border:1px solid ${BORDER};">
                 ${row("이름", escapeHtml(name))}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};height:0;padding:0;"></td></tr>
-                ${row("이메일", `<a href="mailto:${escapeHtml(email)}" style="color:${BRAND_DIM};text-decoration:none;">${escapeHtml(email)}</a>`)}
+                ${row("이메일", `<a href="mailto:${escapeHtml(email)}" style="color:${BRAND};text-decoration:none;font-weight:600;">${escapeHtml(email)}</a>`)}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};"></td></tr>
                 ${row("회사/브랜드", escapeHtml(company))}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};"></td></tr>
@@ -115,15 +116,15 @@ const buildInquiryEmailHtml = (fields: {
                 <tr>
                   <td colspan="2" style="padding:16px 16px 20px 16px;">
                     <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;">문의 내용</p>
-                    <div style="font-size:15px;color:#e5e7eb;font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:rgba(0,0,0,0.25);padding:16px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
+                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#ffffff;padding:16px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:0 28px 24px 28px;">
-              <p style="margin:0;font-size:12px;color:#6b7280;font-family:'Noto Sans KR',sans-serif;text-align:center;line-height:1.5;">
+            <td style="padding:0 28px 24px 28px;background:${CARD};">
+              <p style="margin:0;font-size:12px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;text-align:center;line-height:1.5;">
                 PlaySpot 소개 페이지 · 자동 발송 메일입니다.
               </p>
             </td>

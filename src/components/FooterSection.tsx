@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
+/** 국내 사용 빈도 위주 (앞쪽일수록 먼저 제안) */
 const COMMON_EMAIL_DOMAINS = [
-  "gmail.com",
   "naver.com",
   "daum.net",
   "hanmail.net",
   "kakao.com",
+  "gmail.com",
   "outlook.com",
   "hotmail.com",
   "yahoo.com",
@@ -204,17 +205,32 @@ const FooterSection = () => {
     message: "",
     website: "",
   });
+  const [emailFieldFocused, setEmailFieldFocused] = useState(false);
 
-  const emailDomainHint = useMemo(() => {
+  /** 다이얼로그가 열릴 때마다 배너·이메일 추천 UI 초기화 */
+  useEffect(() => {
+    if (contactOpen) {
+      setSubmitDone("idle");
+      setEmailFieldFocused(false);
+    }
+  }, [contactOpen]);
+
+  const emailSuggestions = useMemo(() => {
     const email = form.email;
-    const at = email.lastIndexOf("@");
-    if (at < 0) return null;
-    const local = email.slice(0, at + 1);
-    const q = email.slice(at + 1).toLowerCase();
-    const list = (q ? COMMON_EMAIL_DOMAINS.filter((d) => d.startsWith(q)) : [...COMMON_EMAIL_DOMAINS]).slice(0, 10);
-    if (list.length === 0) return null;
-    return { local, suggestions: list };
+    const at = email.indexOf("@");
+    if (at <= 0) return [];
+    const localPart = email.slice(0, at).trim();
+    if (!localPart) return [];
+    const domainInput = email.slice(at + 1).toLowerCase();
+    const exactDomain = COMMON_EMAIL_DOMAINS.find((d) => d === domainInput);
+    if (exactDomain && isValidEmailClient(email)) return [];
+    const matched = (
+      domainInput ? COMMON_EMAIL_DOMAINS.filter((d) => d.startsWith(domainInput)) : [...COMMON_EMAIL_DOMAINS]
+    ).slice(0, 8);
+    return matched.map((d) => `${email.slice(0, at)}@${d}`);
   }, [form.email]);
+
+  const showEmailDropdown = emailFieldFocused && emailSuggestions.length > 0;
 
   const canSubmit =
     form.name.trim() &&
@@ -290,10 +306,7 @@ const FooterSection = () => {
 
       <Dialog
         open={contactOpen}
-        onOpenChange={(open) => {
-          setContactOpen(open);
-          if (open) setSubmitDone("idle");
-        }}
+        onOpenChange={setContactOpen}
       >
         <DialogContent className="w-[min(92vw,40rem)] max-w-none">
           <DialogHeader>
@@ -333,35 +346,48 @@ const FooterSection = () => {
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="grid gap-1.5 text-left">
-                <label className="text-sm font-medium">이메일 *</label>
+              <div className="relative grid gap-1.5 text-left">
+                <label className="text-sm font-medium" htmlFor="contact-email">
+                  이메일 *
+                </label>
                 <Input
+                  id="contact-email"
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  onFocus={() => setEmailFieldFocused(true)}
+                  onBlur={() => {
+                    window.setTimeout(() => setEmailFieldFocused(false), 180);
+                  }}
                   placeholder="name@example.com"
                   autoComplete="email"
                   required
+                  aria-autocomplete="list"
+                  aria-expanded={showEmailDropdown}
+                  aria-controls={showEmailDropdown ? "contact-email-suggestions" : undefined}
                 />
-                {emailDomainHint && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-                    <span className="text-[11px] text-muted-foreground shrink-0">자주 쓰는 도메인</span>
-                    {emailDomainHint.suggestions.map((domain) => (
-                      <button
-                        key={domain}
-                        type="button"
-                        className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-muted/70"
-                        onClick={() =>
-                          setForm((p) => ({
-                            ...p,
-                            email: emailDomainHint.local + domain,
-                          }))
-                        }
-                      >
-                        @{domain}
-                      </button>
+                {showEmailDropdown && (
+                  <ul
+                    id="contact-email-suggestions"
+                    role="listbox"
+                    className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-52 overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-md"
+                  >
+                    {emailSuggestions.map((full) => (
+                      <li key={full} role="option" className="border-b border-border/60 last:border-b-0">
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted/80 focus:bg-muted/80 focus:outline-none"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setForm((p) => ({ ...p, email: full }));
+                            setEmailFieldFocused(false);
+                          }}
+                        >
+                          {full}
+                        </button>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
               <div className="grid gap-1.5 text-left">
