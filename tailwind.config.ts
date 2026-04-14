@@ -83,12 +83,33 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(-50%)" },
         },
+        /** Core Technology 머신: 과하지 않은 비콘 리플(box-shadow) */
+        "machine-beacon": {
+          "0%": {
+            boxShadow:
+              "0 0 0 0 rgba(255, 255, 255, 0.52), 0 0 0 0 rgba(255, 255, 255, 0.32), 0 0 0 0 rgba(255, 255, 255, 0.16)",
+          },
+          "72%": {
+            boxShadow:
+              "0 0 0 12px rgba(255, 255, 255, 0), 0 0 0 24px rgba(255, 255, 255, 0), 0 0 0 36px rgba(255, 255, 255, 0)",
+          },
+          "100%": {
+            boxShadow:
+              "0 0 0 0 rgba(255, 255, 255, 0), 0 0 0 0 rgba(255, 255, 255, 0), 0 0 0 0 rgba(255, 255, 255, 0)",
+          },
+        },
+        "machine-icon-blink": {
+          "0%, 100%": { opacity: "0.35" },
+          "50%": { opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-up": "fade-up 0.8s ease-out forwards",
         "ip-marquee": "ip-marquee 55s linear infinite",
+        "machine-beacon": "machine-beacon 34s ease-out infinite",
+        "machine-icon-blink": "machine-icon-blink 1s ease-in-out infinite",
       },
     },
   },

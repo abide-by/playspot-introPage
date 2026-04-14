@@ -1,6 +1,6 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Cog, MonitorSmartphone, Wifi } from "lucide-react";
+import { Cog, MonitorSmartphone, Pointer, Wifi } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useReducedVisualEffects } from "@/hooks/use-reduced-visual-effects";
 import coreTechVisual from "@/assets/playcube-hero-v2.png";
@@ -130,6 +130,7 @@ const CoreTechnology = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.2 });
   const reducedEffects = useReducedVisualEffects();
+  const prefersReducedMotion = useReducedMotion();
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const [mobileMachineAlt, setMobileMachineAlt] = useState(false);
 
@@ -203,16 +204,17 @@ const CoreTechnology = () => {
               호퍼·인터페이스·원격 관리가 한 플랫폼으로 묶여, 현장과 운영을 동시에 다룹니다.
             </p>
 
-            <div className="relative z-10 mt-8 rounded-xl bg-white/5 border border-white/10 min-h-[14rem] overflow-hidden p-2 group/machine-visual">
+            <div className="relative z-10 mt-8 rounded-xl bg-white/5 border border-white/10 min-h-[14rem] overflow-visible p-2 group/machine-visual">
               <div
                 className={cn(
-                  "grid min-h-[12rem] grid-cols-1 grid-rows-1 place-items-center rounded-lg outline-none touch-manipulation",
+                  "relative grid min-h-[12rem] grid-cols-1 grid-rows-1 place-items-center rounded-lg outline-none touch-manipulation md:cursor-pointer",
                   isNarrowViewport && "cursor-pointer"
                 )}
                 role={isNarrowViewport ? "button" : undefined}
                 tabIndex={isNarrowViewport ? 0 : undefined}
                 aria-pressed={isNarrowViewport ? mobileMachineAlt : undefined}
                 aria-label={isNarrowViewport ? "머신 이미지 다른 각도 보기" : undefined}
+                aria-describedby={!isNarrowViewport ? "machine-hover-hint" : undefined}
                 onClick={() => {
                   if (window.matchMedia(MOBILE_MACHINE_MQ).matches) {
                     setMobileMachineAlt((v) => !v);
@@ -226,6 +228,19 @@ const CoreTechnology = () => {
                   }
                 }}
               >
+                {!prefersReducedMotion ? (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center transition-opacity duration-300 md:group-hover/machine-visual:opacity-0"
+                  >
+                    <div
+                      className="flex h-11 w-11 items-center justify-center rounded-full animate-machine-beacon motion-reduce:animate-none"
+                      style={{ animationDuration: "1s" }}
+                    >
+                      <Pointer className="h-7 w-7 text-white drop-shadow-[0_4px_10px_rgba(15,23,42,0.45)] animate-machine-icon-blink motion-reduce:animate-none" />
+                    </div>
+                  </div>
+                ) : null}
                 {/* 동일 해상도: 아래는 고정, 위만 페이드 — md+ 호버 / 모바일 탭 토글 */}
                 <img
                   src={coreTechVisual}
@@ -252,6 +267,12 @@ const CoreTechnology = () => {
                   )}
                 />
               </div>
+              <p
+                id="machine-hover-hint"
+                className="mt-2 hidden text-center text-[11px] leading-snug text-muted-foreground/75 md:block"
+              >
+                마우스를 올리면 커스텀 스킨 포스터가 펼쳐져요
+              </p>
             </div>
           </motion.div>
 
