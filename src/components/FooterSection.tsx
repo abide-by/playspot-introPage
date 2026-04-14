@@ -1,5 +1,5 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { Menu, X } from "lucide-react";
 import logoImg from "@/assets/playspot-logo.png";
 import playcubeTextLogo from "@/assets/playcube-text-logo.png";
@@ -8,6 +8,47 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+
+const COMMON_EMAIL_DOMAINS = [
+  "gmail.com",
+  "naver.com",
+  "daum.net",
+  "hanmail.net",
+  "kakao.com",
+  "outlook.com",
+  "hotmail.com",
+  "yahoo.com",
+  "icloud.com",
+  "playspot.co.kr",
+] as const;
+
+function formatKoreanPhoneInput(raw: string): string {
+  const d = raw.replace(/\D/g, "");
+  if (d.startsWith("02")) {
+    const n = d.slice(0, 10);
+    if (n.length <= 2) return n;
+    if (n.length <= 5) return `${n.slice(0, 2)}-${n.slice(2)}`;
+    if (n.length <= 9) return `${n.slice(0, 2)}-${n.slice(2, 5)}-${n.slice(5)}`;
+    return `${n.slice(0, 2)}-${n.slice(2, 6)}-${n.slice(6, 10)}`;
+  }
+  const n = d.slice(0, 11);
+  if (n.length <= 3) return n;
+  if (n.length <= 7) return `${n.slice(0, 3)}-${n.slice(3)}`;
+  return `${n.slice(0, 3)}-${n.slice(3, 7)}-${n.slice(7)}`;
+}
+
+function isValidKoreanPhoneClient(s: string): boolean {
+  const d = s.replace(/\D/g, "");
+  if (!/^0\d+$/.test(d)) return false;
+  if (d.length < 9 || d.length > 11) return false;
+  if (d.startsWith("010")) return d.length === 11;
+  if (d.startsWith("02")) return d.length >= 9 && d.length <= 10;
+  return d.length >= 10 && d.length <= 11;
+}
+
+function isValidEmailClient(s: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
+}
 
 const navLinks = [
   { name: "Home", href: "#home" },
@@ -164,7 +205,22 @@ const FooterSection = () => {
     website: "",
   });
 
-  const canSubmit = form.name.trim() && form.email.trim() && form.message.trim();
+  const emailDomainHint = useMemo(() => {
+    const email = form.email;
+    const at = email.lastIndexOf("@");
+    if (at < 0) return null;
+    const local = email.slice(0, at + 1);
+    const q = email.slice(at + 1).toLowerCase();
+    const list = (q ? COMMON_EMAIL_DOMAINS.filter((d) => d.startsWith(q)) : [...COMMON_EMAIL_DOMAINS]).slice(0, 10);
+    if (list.length === 0) return null;
+    return { local, suggestions: list };
+  }, [form.email]);
+
+  const canSubmit =
+    form.name.trim() &&
+    isValidEmailClient(form.email) &&
+    isValidKoreanPhoneClient(form.phone) &&
+    form.message.trim();
 
   async function submitContact(e: React.FormEvent) {
     e.preventDefault();
@@ -267,11 +323,11 @@ const FooterSection = () => {
                 />
               </div>
               <div className="grid gap-1.5 text-left">
-                <label className="text-sm font-medium">회사/브랜드</label>
+                <label className="text-sm font-medium">회사/브랜드 (선택)</label>
                 <Input
                   value={form.company}
                   onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}
-                  placeholder="(선택)"
+                  placeholder="브랜드명"
                 />
               </div>
             </div>
@@ -284,15 +340,42 @@ const FooterSection = () => {
                   value={form.email}
                   onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
                   placeholder="name@example.com"
+                  autoComplete="email"
                   required
                 />
+                {emailDomainHint && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                    <span className="text-[11px] text-muted-foreground shrink-0">자주 쓰는 도메인</span>
+                    {emailDomainHint.suggestions.map((domain) => (
+                      <button
+                        key={domain}
+                        type="button"
+                        className="rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-foreground hover:bg-muted/70"
+                        onClick={() =>
+                          setForm((p) => ({
+                            ...p,
+                            email: emailDomainHint.local + domain,
+                          }))
+                        }
+                      >
+                        @{domain}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <div className="grid gap-1.5 text-left">
-                <label className="text-sm font-medium">연락처</label>
+                <label className="text-sm font-medium">연락처 *</label>
                 <Input
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
                   value={form.phone}
-                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-                  placeholder="010-1234-5678 (선택)"
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, phone: formatKoreanPhoneInput(e.target.value) }))
+                  }
+                  placeholder="010-1234-5678"
+                  required
                 />
               </div>
             </div>
