@@ -83,14 +83,14 @@ const buildInquiryEmailHtml = (
   const { name, email, company, phone, message } = fields;
   const row = (label: string, value: string) => `
   <tr>
-    <td style="padding:12px 14px 12px 20px;vertical-align:top;font-size:13px;color:${MUTED};width:120px;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;">${label}</td>
+    <td style="padding:12px 14px 12px 24px;vertical-align:top;font-size:13px;color:${MUTED};width:120px;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;">${label}</td>
     <td style="padding:12px 20px 12px 8px;font-size:15px;color:${TEXT};font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;">${value}</td>
   </tr>`;
 
   const headerBrand =
     logoUrl && /^https?:\/\//i.test(logoUrl)
-      ? `<img src="${escapeAttr(logoUrl)}" alt="PLAY SPOT" height="32" style="display:block;border:0;outline:none;text-decoration:none;height:32px;width:auto;max-width:168px;" />`
-      : `<p style="margin:0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.9);font-family:'Noto Sans KR',sans-serif;">PLAY SPOT</p>`;
+      ? `<img src="${escapeAttr(logoUrl)}" alt="PLAY SPOT" width="120" style="display:block;border:0;outline:none;text-decoration:none;width:120px;max-width:120px;height:auto;" />`
+      : `<p style="margin:0;font-size:13px;letter-spacing:0.18em;text-transform:uppercase;color:${BRAND};font-family:'Noto Sans KR',sans-serif;font-weight:700;">PLAY SPOT</p>`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -105,9 +105,13 @@ const buildInquiryEmailHtml = (
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};box-shadow:0 4px 24px rgba(15,23,42,0.06);">
           <tr>
-            <td style="padding:28px 28px 20px 28px;background:linear-gradient(135deg,${BRAND} 0%,#b91c5c 100%);">
+            <td style="padding:22px 28px 20px 28px;background:${CARD};border-bottom:1px solid ${BORDER};">
               ${headerBrand}
-              <h1 style="margin:12px 0 0 0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.3;">새 창업 문의가 도착했습니다</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px 28px 24px 28px;background:linear-gradient(135deg,${BRAND} 0%,#b91c5c 100%);">
+              <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다</h1>
             </td>
           </tr>
           <tr>
