@@ -12,6 +12,7 @@ function json(statusCode, body) {
 }
 
 const MAX_MESSAGE_LENGTH = 4000;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function escapeHtml(s) {
   return String(s)
@@ -55,7 +56,33 @@ function parseRecipientList(raw) {
     .split(/[,;]/)
     .map((s) => s.trim())
     .filter(Boolean)
-    .filter((addr) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(addr));
+    .filter((addr) => EMAIL_RE.test(addr));
+}
+
+function sanitizePayload(payload) {
+  return {
+    name: String(payload.name || "").trim(),
+    company: String(payload.company || "").trim(),
+    email: String(payload.email || "").trim(),
+    phone: String(payload.phone || "").trim(),
+    message: String(payload.message || "").trim().slice(0, MAX_MESSAGE_LENGTH),
+  };
+}
+
+function buildPlainText({ name, company, email, phone, message, sentAt }) {
+  return [
+    `이름: ${name}`,
+    company ? `회사/브랜드: ${company}` : null,
+    `이메일: ${email}`,
+    phone ? `연락처: ${phone}` : null,
+    "",
+    "문의 내용:",
+    message,
+    "",
+    `Sent at: ${sentAt}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export async function handler(event) {
@@ -77,18 +104,14 @@ export async function handler(event) {
   // honeypot (bots usually fill hidden fields)
   if (payload.website) return json(200, { ok: true });
 
-  const name = String(payload.name || "").trim();
-  const company = String(payload.company || "").trim();
-  const email = String(payload.email || "").trim();
-  const phone = String(payload.phone || "").trim();
-  const message = String(payload.message || "").trim().slice(0, MAX_MESSAGE_LENGTH);
+  const { name, company, email, phone, message } = sanitizePayload(payload);
 
   if (!name || !email || !message) {
     return json(400, { ok: false, error: "MISSING_FIELDS" });
   }
 
   // very lightweight email check
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!EMAIL_RE.test(email)) {
     return json(400, { ok: false, error: "INVALID_EMAIL" });
   }
 
@@ -124,19 +147,7 @@ export async function handler(event) {
     const subject = `[PLAY SPOT] 창업 문의 - ${name}${company ? ` (${company})` : ""}`;
     const sentAt = new Date().toISOString();
 
-    const text = [
-      `이름: ${name}`,
-      company ? `회사/브랜드: ${company}` : null,
-      `이메일: ${email}`,
-      phone ? `연락처: ${phone}` : null,
-      "",
-      "문의 내용:",
-      message,
-      "",
-      `Sent at: ${sentAt}`,
-    ]
-      .filter(Boolean)
-      .join("\n");
+    const text = buildPlainText({ name, company, email, phone, message, sentAt });
 
     const html = `<!doctype html>
 <html>

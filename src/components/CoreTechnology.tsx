@@ -125,6 +125,13 @@ const TechGlassCard = ({
 };
 
 const MOBILE_MACHINE_MQ = "(max-width: 767px)";
+const MACHINE_HINT_ID = "machine-hover-hint";
+const MACHINE_HINT_TEXT = "마우스를 올리면 커스텀 스킨 포스터가 펼쳐져요";
+const MACHINE_HINT_DURATION = "1s";
+const MACHINE_BASE_IMAGE_CLASS =
+  "col-start-1 row-start-1 max-h-[min(22rem,50vh)] w-full max-w-full object-contain pointer-events-none select-none";
+const MACHINE_OVERLAY_IMAGE_CLASS =
+  "col-start-1 row-start-1 max-h-[min(22rem,50vh)] w-full max-w-full object-contain transition-opacity duration-300 ease-out motion-reduce:transition-none pointer-events-none select-none";
 
 const CoreTechnology = () => {
   const ref = useRef(null);
@@ -133,7 +140,10 @@ const CoreTechnology = () => {
   const prefersReducedMotion = useReducedMotion();
   const [isNarrowViewport, setIsNarrowViewport] = useState(false);
   const [mobileMachineAlt, setMobileMachineAlt] = useState(false);
+  const canToggleMachineVisual = isNarrowViewport;
+  const showMachineHint = !prefersReducedMotion;
 
+  /** 왜: 첫 hover/tap 전환 시 이미지 디코딩 지연으로 인한 깜빡임을 줄이기 위해 미리 로드한다. */
   useEffect(() => {
     for (const src of [coreTechVisual, coreTechVisualHover]) {
       const img = new Image();
@@ -141,6 +151,19 @@ const CoreTechnology = () => {
       void img.decode?.().catch(() => {});
     }
   }, []);
+
+  const toggleMachineVisual = () => {
+    if (!canToggleMachineVisual) return;
+    setMobileMachineAlt((v) => !v);
+  };
+
+  const handleMachineKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!canToggleMachineVisual) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleMachineVisual();
+    }
+  };
 
   useEffect(() => {
     const mq = window.matchMedia(MOBILE_MACHINE_MQ);
@@ -204,38 +227,30 @@ const CoreTechnology = () => {
               호퍼·인터페이스·원격 관리가 한 플랫폼으로 묶여, 현장과 운영을 동시에 다룹니다.
             </p>
 
+            {/* 왜: 입력 방식이 달라 데스크톱은 hover, 모바일은 tap 토글로 동일 경험을 맞춘다. */}
             <div className="relative z-10 mt-8 rounded-xl bg-white/5 border border-white/10 min-h-[14rem] overflow-visible p-2 group/machine-visual">
               <div
                 className={cn(
                   "relative grid min-h-[12rem] grid-cols-1 grid-rows-1 place-items-center rounded-lg outline-none touch-manipulation md:cursor-pointer",
-                  isNarrowViewport && "cursor-pointer"
+                  canToggleMachineVisual && "cursor-pointer"
                 )}
-                role={isNarrowViewport ? "button" : undefined}
-                tabIndex={isNarrowViewport ? 0 : undefined}
-                aria-pressed={isNarrowViewport ? mobileMachineAlt : undefined}
-                aria-label={isNarrowViewport ? "머신 이미지 다른 각도 보기" : undefined}
-                aria-describedby={!isNarrowViewport ? "machine-hover-hint" : undefined}
-                onClick={() => {
-                  if (window.matchMedia(MOBILE_MACHINE_MQ).matches) {
-                    setMobileMachineAlt((v) => !v);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (!isNarrowViewport) return;
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setMobileMachineAlt((v) => !v);
-                  }
-                }}
+                role={canToggleMachineVisual ? "button" : undefined}
+                tabIndex={canToggleMachineVisual ? 0 : undefined}
+                aria-pressed={canToggleMachineVisual ? mobileMachineAlt : undefined}
+                aria-label={canToggleMachineVisual ? "머신 이미지 다른 각도 보기" : undefined}
+                aria-describedby={!canToggleMachineVisual ? MACHINE_HINT_ID : undefined}
+                onClick={toggleMachineVisual}
+                onKeyDown={handleMachineKeyDown}
               >
-                {!prefersReducedMotion ? (
+                {/* 왜: OS 모션 축소 설정 사용자는 힌트 애니메이션을 숨겨 시각 피로를 줄인다. */}
+                {showMachineHint ? (
                   <div
                     aria-hidden
                     className="pointer-events-none absolute inset-0 z-[3] flex items-center justify-center transition-opacity duration-300 md:group-hover/machine-visual:opacity-0"
                   >
                     <div
                       className="flex h-11 w-11 items-center justify-center rounded-full animate-machine-beacon motion-reduce:animate-none"
-                      style={{ animationDuration: "1s" }}
+                      style={{ animationDuration: MACHINE_HINT_DURATION }}
                     >
                       <Pointer className="h-7 w-7 text-white drop-shadow-[0_4px_10px_rgba(15,23,42,0.45)] animate-machine-icon-blink motion-reduce:animate-none" />
                     </div>
@@ -249,7 +264,7 @@ const CoreTechnology = () => {
                   width={800}
                   height={960}
                   decoding="async"
-                  className="col-start-1 row-start-1 max-h-[min(22rem,50vh)] w-full max-w-full object-contain pointer-events-none select-none"
+                  className={MACHINE_BASE_IMAGE_CLASS}
                 />
                 <img
                   src={coreTechVisualHover}
@@ -261,17 +276,17 @@ const CoreTechnology = () => {
                   height={960}
                   decoding="async"
                   className={cn(
-                    "col-start-1 row-start-1 max-h-[min(22rem,50vh)] w-full max-w-full object-contain transition-opacity duration-300 ease-out motion-reduce:transition-none pointer-events-none select-none",
+                    MACHINE_OVERLAY_IMAGE_CLASS,
                     "md:opacity-0 md:group-hover/machine-visual:opacity-100",
                     mobileMachineAlt ? "max-md:opacity-100" : "max-md:opacity-0"
                   )}
                 />
               </div>
               <p
-                id="machine-hover-hint"
+                id={MACHINE_HINT_ID}
                 className="mt-2 hidden text-center text-[11px] leading-snug text-muted-foreground/75 md:block"
               >
-                마우스를 올리면 커스텀 스킨 포스터가 펼쳐져요
+                {MACHINE_HINT_TEXT}
               </p>
             </div>
           </motion.div>

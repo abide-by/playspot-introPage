@@ -1,5 +1,5 @@
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import logoImg from "@/assets/playspot-logo.png";
 import playcubeTextLogo from "@/assets/playcube-text-logo.png";
@@ -9,48 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-/** 국내 사용 빈도 위주 (앞쪽일수록 먼저 제안) */
-const COMMON_EMAIL_DOMAINS = [
-  "naver.com",
-  "daum.net",
-  "hanmail.net",
-  "kakao.com",
-  "gmail.com",
-  "outlook.com",
-  "hotmail.com",
-  "yahoo.com",
-  "icloud.com",
-  "playspot.co.kr",
-] as const;
-
-function formatKoreanPhoneInput(raw: string): string {
-  const d = raw.replace(/\D/g, "");
-  if (d.startsWith("02")) {
-    const n = d.slice(0, 10);
-    if (n.length <= 2) return n;
-    if (n.length <= 5) return `${n.slice(0, 2)}-${n.slice(2)}`;
-    if (n.length <= 9) return `${n.slice(0, 2)}-${n.slice(2, 5)}-${n.slice(5)}`;
-    return `${n.slice(0, 2)}-${n.slice(2, 6)}-${n.slice(6, 10)}`;
-  }
-  const n = d.slice(0, 11);
-  if (n.length <= 3) return n;
-  if (n.length <= 7) return `${n.slice(0, 3)}-${n.slice(3)}`;
-  return `${n.slice(0, 3)}-${n.slice(3, 7)}-${n.slice(7)}`;
-}
-
-function isValidKoreanPhoneClient(s: string): boolean {
-  const d = s.replace(/\D/g, "");
-  if (!/^0\d+$/.test(d)) return false;
-  if (d.length < 9 || d.length > 11) return false;
-  if (d.startsWith("010")) return d.length === 11;
-  if (d.startsWith("02")) return d.length >= 9 && d.length <= 10;
-  return d.length >= 10 && d.length <= 11;
-}
-
-function isValidEmailClient(s: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim());
-}
+import { useContactForm } from "@/hooks/use-contact-form";
 
 const navLinks = [
   { name: "Home", href: "#home" },
@@ -195,122 +154,26 @@ const FooterSection = () => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.2 });
   const reducedEffects = useReducedVisualEffects();
-  const [contactOpen, setContactOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitDone, setSubmitDone] = useState<"idle" | "success" | "error">("idle");
-  const [form, setForm] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    message: "",
-    website: "",
-  });
-  const [emailFieldFocused, setEmailFieldFocused] = useState(false);
-  const [emailSuggestIndex, setEmailSuggestIndex] = useState(0);
-  const phoneInputRef = useRef<HTMLInputElement>(null);
-
-  /** 다이얼로그가 열릴 때마다 배너·이메일 추천 UI 초기화 */
-  useEffect(() => {
-    if (contactOpen) {
-      setSubmitDone("idle");
-      setEmailFieldFocused(false);
-      setEmailSuggestIndex(0);
-    }
-  }, [contactOpen]);
-
-  const emailSuggestions = useMemo(() => {
-    const email = form.email;
-    const at = email.indexOf("@");
-    if (at <= 0) return [];
-    const localPart = email.slice(0, at).trim();
-    if (!localPart) return [];
-    const domainInput = email.slice(at + 1).toLowerCase();
-    const exactDomain = COMMON_EMAIL_DOMAINS.find((d) => d === domainInput);
-    if (exactDomain && isValidEmailClient(email)) return [];
-    const matched = (
-      domainInput ? COMMON_EMAIL_DOMAINS.filter((d) => d.startsWith(domainInput)) : [...COMMON_EMAIL_DOMAINS]
-    ).slice(0, 8);
-    return matched.map((d) => `${email.slice(0, at)}@${d}`);
-  }, [form.email]);
-
-  useEffect(() => {
-    setEmailSuggestIndex((i) => {
-      if (emailSuggestions.length === 0) return 0;
-      return Math.min(i, emailSuggestions.length - 1);
-    });
-  }, [emailSuggestions]);
-
-  const showEmailDropdown = emailFieldFocused && emailSuggestions.length > 0;
-
-  function applyEmailSuggestion(full: string, moveToPhone: boolean) {
-    setForm((p) => ({ ...p, email: full }));
-    setEmailFieldFocused(false);
-    setEmailSuggestIndex(0);
-    if (moveToPhone) {
-      window.setTimeout(() => phoneInputRef.current?.focus(), 0);
-    }
-  }
-
-  function handleEmailKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    const list = emailSuggestions;
-    const open = emailFieldFocused && list.length > 0;
-    if (!open) return;
-
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setEmailSuggestIndex((i) => Math.min(i + 1, list.length - 1));
-      return;
-    }
-    if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setEmailSuggestIndex((i) => Math.max(i - 1, 0));
-      return;
-    }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      applyEmailSuggestion(list[emailSuggestIndex] ?? list[0], false);
-      return;
-    }
-    if (e.key === "Tab" && !e.shiftKey) {
-      e.preventDefault();
-      applyEmailSuggestion(list[emailSuggestIndex] ?? list[0], true);
-      return;
-    }
-    if (e.key === "Escape") {
-      e.preventDefault();
-      setEmailFieldFocused(false);
-    }
-  }
-
-  const canSubmit =
-    form.name.trim() &&
-    isValidEmailClient(form.email) &&
-    isValidKoreanPhoneClient(form.phone) &&
-    form.message.trim();
-
-  async function submitContact(e: React.FormEvent) {
-    e.preventDefault();
-    if (submitting || !canSubmit) return;
-    setSubmitting(true);
-    setSubmitDone("idle");
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error("Request failed");
-      const data = await res.json().catch(() => ({}));
-      if (!data?.ok) throw new Error("Send failed");
-      setSubmitDone("success");
-      setForm({ name: "", company: "", email: "", phone: "", message: "", website: "" });
-    } catch {
-      setSubmitDone("error");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const {
+    contactOpen,
+    setContactOpen,
+    submitting,
+    submitDone,
+    form,
+    updateForm,
+    emailFieldFocused,
+    setEmailFieldFocused,
+    emailSuggestIndex,
+    setEmailSuggestIndex,
+    emailSuggestions,
+    showEmailDropdown,
+    canSubmit,
+    phoneInputRef,
+    applyEmailSuggestion,
+    handleEmailKeyDown,
+    submitContact,
+    formatKoreanPhoneInput,
+  } = useContactForm();
 
   return (
     <>
@@ -372,7 +235,7 @@ const FooterSection = () => {
               autoComplete="off"
               className="hidden"
               value={form.website}
-              onChange={(e) => setForm((p) => ({ ...p, website: e.target.value }))}
+              onChange={(e) => updateForm("website", e.target.value)}
               aria-hidden="true"
             />
 
@@ -381,7 +244,7 @@ const FooterSection = () => {
                 <label className="text-sm font-medium">이름 *</label>
                 <Input
                   value={form.name}
-                  onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+                  onChange={(e) => updateForm("name", e.target.value)}
                   placeholder="홍길동"
                   required
                 />
@@ -390,7 +253,7 @@ const FooterSection = () => {
                 <label className="text-sm font-medium">회사/브랜드 (선택)</label>
                 <Input
                   value={form.company}
-                  onChange={(e) => setForm((p) => ({ ...p, company: e.target.value }))}
+                  onChange={(e) => updateForm("company", e.target.value)}
                   placeholder="브랜드명"
                 />
               </div>
@@ -406,7 +269,7 @@ const FooterSection = () => {
                   type="email"
                   value={form.email}
                   onChange={(e) => {
-                    setForm((p) => ({ ...p, email: e.target.value }));
+                    updateForm("email", e.target.value);
                     setEmailSuggestIndex(0);
                   }}
                   onKeyDown={handleEmailKeyDown}
@@ -467,7 +330,7 @@ const FooterSection = () => {
                   autoComplete="tel"
                   value={form.phone}
                   onChange={(e) =>
-                    setForm((p) => ({ ...p, phone: formatKoreanPhoneInput(e.target.value) }))
+                    updateForm("phone", formatKoreanPhoneInput(e.target.value))
                   }
                   placeholder="010-1234-5678"
                   required
@@ -479,7 +342,7 @@ const FooterSection = () => {
               <label className="text-sm font-medium">문의 내용 *</label>
               <Textarea
                 value={form.message}
-                onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
+                onChange={(e) => updateForm("message", e.target.value)}
                 placeholder="희망 설치 지역 / 예상 수량 / 문의 사항 등을 적어주세요."
                 required
               />

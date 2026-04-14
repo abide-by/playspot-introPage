@@ -14,6 +14,11 @@ const SLIDES = [
   { src: mokup3, alt: "PLAYCUBE 관리 앱 — 대시보드" },
   { src: mokup4, alt: "PLAYCUBE 관리 앱 — 원격 제어" },
 ] as const;
+const MOCKUP_IMAGE_SIZE = { width: 1392, height: 2880 } as const;
+const CAROUSEL_ARIA_LABEL =
+  "PLAYCUBE 관리 앱 화면 예시. 현재: %s. 이미지 클릭 시 화면이 전환됩니다.";
+const OVERLAY_IMAGE_CLASS =
+  "absolute left-0 top-0 h-auto w-full max-h-[min(78vh,720px)] object-contain object-top";
 
 const fadeUp = (delay = 0) => ({
   hidden: { opacity: 0, y: 80 },
@@ -38,25 +43,31 @@ function ManagementMockupCarousel() {
   const fadeClass = prefersReducedMotion
     ? "transition-none"
     : "transition-opacity duration-300 ease-out motion-reduce:transition-none";
+  const currentSlideAlt = SLIDES[index].alt;
+
+  const selectSlide = useCallback((nextIndex: number) => {
+    setIndex(nextIndex);
+  }, []);
 
   return (
     <div className="flex flex-col items-center gap-4">
       <motion.div
         role="region"
         aria-roledescription="carousel"
-        aria-label={`PLAYCUBE 관리 앱 화면 예시. 현재: ${SLIDES[index].alt}. 이미지 클릭 시 화면이 전환됩니다.`}
+        aria-label={CAROUSEL_ARIA_LABEL.replace("%s", currentSlideAlt)}
         aria-live="polite"
         className={shellClass}
         onClick={goNext}
       >
+        {/* 왜: 베이스 목업을 고정해두고 화면 레이어만 바꿔 전환 시 이질감을 줄인다. */}
         <img
           src={mokup0}
           alt=""
           aria-hidden
           loading="eager"
           decoding="async"
-          width={1392}
-          height={2880}
+          width={MOCKUP_IMAGE_SIZE.width}
+          height={MOCKUP_IMAGE_SIZE.height}
           className="pointer-events-none block h-auto max-h-[min(78vh,720px)] w-full object-contain object-top drop-shadow-2xl"
         />
 
@@ -68,10 +79,10 @@ function ManagementMockupCarousel() {
               alt=""
               loading="eager"
               decoding="async"
-              width={1392}
-              height={2880}
+              width={MOCKUP_IMAGE_SIZE.width}
+              height={MOCKUP_IMAGE_SIZE.height}
               className={cn(
-                "absolute left-0 top-0 h-auto w-full max-h-[min(78vh,720px)] object-contain object-top",
+                OVERLAY_IMAGE_CLASS,
                 fadeClass,
                 index === slideIdx ? "z-[2] opacity-100" : "z-[1] opacity-0",
               )}
@@ -80,6 +91,7 @@ function ManagementMockupCarousel() {
         </div>
       </motion.div>
 
+      {/* 왜: 점 인디케이터 클릭이 부모의 next 클릭으로 전파되지 않도록 분리한다. */}
       <div
         className="flex items-center justify-center gap-2"
         onClick={(e) => e.stopPropagation()}
@@ -96,7 +108,7 @@ function ManagementMockupCarousel() {
             }`}
             onClick={(e) => {
               e.stopPropagation();
-              setIndex(i);
+              selectSlide(i);
             }}
           />
         ))}

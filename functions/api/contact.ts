@@ -21,6 +21,14 @@ type ContactPayload = {
   website?: string; // honeypot
 };
 
+type SanitizedContact = {
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  message: string;
+};
+
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
     status,
@@ -161,6 +169,32 @@ const parseRecipients = (raw: string) =>
     .filter((s) => s.length > 0)
     .filter((s) => isValidEmail(s));
 
+const sanitizeContactPayload = (data: ContactPayload): SanitizedContact => ({
+  name: (data.name ?? "").trim(),
+  email: (data.email ?? "").trim(),
+  message: normalizeNewlines((data.message ?? "").trim()),
+  company: (data.company ?? "").trim(),
+  phone: (data.phone ?? "").trim(),
+});
+
+/** 왜: 일부 클라이언트/로그 환경에서 HTML이 제한될 수 있어 텍스트 본문을 함께 생성한다. */
+const buildInquiryText = (fields: {
+  name: string;
+  email: string;
+  company: string;
+  phone: string;
+  message: string;
+}) =>
+  [
+    `이름: ${fields.name}`,
+    `이메일: ${fields.email}`,
+    `회사/브랜드: ${fields.company}`,
+    `연락처: ${fields.phone}`,
+    "",
+    "문의 내용:",
+    fields.message,
+  ].join("\n");
+
 /** 로고·편지 아이콘 등 정적 파일의 origin (SITE_URL 또는 MAIL_LOGO_URL에서 유도) */
 function resolveSiteBase(env: Env): string | null {
   const baseRaw = (env.SITE_URL || env.PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
@@ -201,11 +235,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json(200, { ok: true });
     }
 
-    const name = (data.name ?? "").trim();
-    const email = (data.email ?? "").trim();
-    const message = normalizeNewlines((data.message ?? "").trim());
-    const company = (data.company ?? "").trim();
-    const phone = (data.phone ?? "").trim();
+    const { name, email, message, company, phone } = sanitizeContactPayload(data);
 
     if (!name || !email || !message || !phone) {
       return json(400, { ok: false, error: "Missing required fields" });
@@ -219,6 +249,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json(400, { ok: false, error: "Invalid email" });
     }
 
+    // 왜: 이전/신규 환경변수 키를 함께 허용해 배포 환경 전환 시 중단을 방지한다.
     const resendApiKey = env.RESEND_API_KEY || env.RESEND_KEY || "";
     const toRaw = env.MAIL_TO || env.CONTACT_TO_EMAIL || "";
     const recipients = parseRecipients(toRaw);
@@ -235,15 +266,13 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const subject = `[PLAY SPOT] 창업 문의 - ${name}`;
     const companyLine = company || "-";
     const phoneLine = phone || "-";
-    const text = [
-      `이름: ${name}`,
-      `이메일: ${email}`,
-      `회사/브랜드: ${companyLine}`,
-      `연락처: ${phoneLine}`,
-      "",
-      "문의 내용:",
+    const text = buildInquiryText({
+      name,
+      email,
+      company: companyLine,
+      phone: phoneLine,
       message,
-    ].join("\n");
+    });
 
     const mailLogoUrl = resolveMailLogoUrl(env);
     const mailIconSrc = resolveMailIconSrc(env);
