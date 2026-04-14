@@ -105,13 +105,9 @@ const buildInquiryEmailHtml = (
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};box-shadow:0 4px 24px rgba(15,23,42,0.06);">
           <tr>
-            <td style="padding:22px 28px 20px 28px;background:${CARD};border-bottom:1px solid ${BORDER};">
+            <td style="padding:22px 28px 22px 28px;background:${CARD};border-bottom:1px solid ${BORDER};">
               ${headerBrand}
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:22px 28px 24px 28px;background:linear-gradient(135deg,${BRAND} 0%,#b91c5c 100%);">
-              <h1 style="margin:0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다</h1>
+              <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;color:${BRAND};font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">새 창업 문의가 도착했습니다</h1>
             </td>
           </tr>
           <tr>
