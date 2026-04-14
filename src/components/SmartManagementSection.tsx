@@ -1,55 +1,110 @@
-import { motion, useInView, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useRef } from "react";
-import dashboardImg from "@/assets/dashboard-mockup.png";
+import { motion, useInView, useReducedMotion } from "framer-motion";
+import { useRef, useState, useCallback } from "react";
+import mokup0 from "@/assets/mokup_0.png";
+import mokup1 from "@/assets/mokup_1.png";
+import mokup2 from "@/assets/mokup_2.png";
+import mokup3 from "@/assets/mokup_3.png";
+import mokup4 from "@/assets/mokup_4.png";
 import { useReducedVisualEffects } from "@/hooks/use-reduced-visual-effects";
+import { cn } from "@/lib/utils";
+
+const SLIDES = [
+  { src: mokup1, alt: "PLAYCUBE 관리 앱 — 로그인 화면" },
+  { src: mokup2, alt: "PLAYCUBE 관리 앱 — 기기 관리 목록" },
+  { src: mokup3, alt: "PLAYCUBE 관리 앱 — 대시보드" },
+  { src: mokup4, alt: "PLAYCUBE 관리 앱 — 원격 제어" },
+] as const;
 
 const fadeUp = (delay = 0) => ({
   hidden: { opacity: 0, y: 80 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay, ease: "easeOut" } },
 });
 
-const dashboardImgClass =
-  "w-[380px] md:w-[480px] lg:w-[540px] drop-shadow-2xl";
+/**
+ * mokup_0 베이스 + mokup_1~4 전체 겹침·opacity 전환(클립 없음, 파일과 동일).
+ * drop-shadow는 베이스 img만(filter로 다중 투명 PNG 겹치면 검게 깨질 수 있음).
+ */
+const shellClass =
+  "relative mx-auto w-[min(92vw,380px)] md:w-[min(88vw,480px)] lg:w-[540px] max-h-[min(78vh,720px)] cursor-pointer touch-manipulation select-none";
 
-function DashboardMockupTilt() {
-  const imgRef = useRef<HTMLDivElement>(null);
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
+function ManagementMockupCarousel() {
+  const [index, setIndex] = useState(0);
+  const prefersReducedMotion = useReducedMotion();
 
-  const rotateX = useSpring(useTransform(mouseY, [-200, 200], [10, -10]), { stiffness: 300, damping: 30 });
-  const rotateY = useSpring(useTransform(mouseX, [-200, 200], [-10, 10]), { stiffness: 300, damping: 30 });
+  const goNext = useCallback(() => {
+    setIndex((i) => (i + 1) % SLIDES.length);
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!imgRef.current) return;
-    const rect = imgRef.current.getBoundingClientRect();
-    mouseX.set(e.clientX - rect.left - rect.width / 2);
-    mouseY.set(e.clientY - rect.top - rect.height / 2);
-  };
-
-  const handleMouseLeave = () => {
-    mouseX.set(0);
-    mouseY.set(0);
-  };
+  const fadeClass = prefersReducedMotion
+    ? "transition-none"
+    : "transition-opacity duration-300 ease-out motion-reduce:transition-none";
 
   return (
-    <motion.div
-      ref={imgRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{ rotateX, rotateY }}
-      className="will-change-transform"
-    >
-      <img
-        src={dashboardImg}
-        alt="PLAYSPOT 원격 관리 대시보드"
-        loading="lazy"
-        decoding="async"
-        sizes="(max-width: 768px) 90vw, 540px"
-        width={800}
-        height={1024}
-        className={dashboardImgClass}
-      />
-    </motion.div>
+    <div className="flex flex-col items-center gap-4">
+      <motion.div
+        role="region"
+        aria-roledescription="carousel"
+        aria-label={`PLAYCUBE 관리 앱 화면 예시. 현재: ${SLIDES[index].alt}. 이미지 클릭 시 화면이 전환됩니다.`}
+        aria-live="polite"
+        className={shellClass}
+        onClick={goNext}
+      >
+        <img
+          src={mokup0}
+          alt=""
+          aria-hidden
+          loading="eager"
+          decoding="async"
+          width={1392}
+          height={2880}
+          className="pointer-events-none block h-auto max-h-[min(78vh,720px)] w-full object-contain object-top drop-shadow-2xl"
+        />
+
+        <div className="pointer-events-none absolute inset-0" aria-hidden>
+          {SLIDES.map((slide, slideIdx) => (
+            <img
+              key={slideIdx}
+              src={slide.src}
+              alt=""
+              loading="eager"
+              decoding="async"
+              width={1392}
+              height={2880}
+              className={cn(
+                "absolute left-0 top-0 h-auto w-full max-h-[min(78vh,720px)] object-contain object-top",
+                fadeClass,
+                index === slideIdx ? "z-[2] opacity-100" : "z-[1] opacity-0",
+              )}
+            />
+          ))}
+        </div>
+      </motion.div>
+
+      <div
+        className="flex items-center justify-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        {SLIDES.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            aria-label={`${i + 1}번 화면으로 이동`}
+            aria-current={i === index ? "true" : undefined}
+            className={`h-2 rounded-full transition-all ${
+              i === index ? "w-7 bg-primary" : "w-2 bg-muted-foreground/35 hover:bg-muted-foreground/55"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setIndex(i);
+            }}
+          />
+        ))}
+      </div>
+      <p className="text-xs text-muted-foreground text-center max-w-sm break-keep">
+        이미지 클릭 시 화면이 전환됩니다.
+      </p>
+    </div>
   );
 }
 
@@ -62,10 +117,7 @@ const SmartManagementSection = () => {
     <section id="smart-management" ref={ref} className="py-32 md:py-48 lg:py-56 xl:py-64 px-6 bg-secondary/50">
       <div className="max-w-6xl mx-auto">
         <div className="grid md:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial="hidden"
-            animate={isInView ? "visible" : "hidden"}
-          >
+          <motion.div initial="hidden" animate={isInView ? "visible" : "hidden"}>
             <motion.span variants={fadeUp(0)} className="inline-block px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold tracking-wider uppercase mb-6">
               New
             </motion.span>
@@ -88,22 +140,8 @@ const SmartManagementSection = () => {
             animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: reducedEffects ? 40 : 80 }}
             transition={{ duration: reducedEffects ? 0.5 : 0.8, delay: reducedEffects ? 0.15 : 0.3, ease: "easeOut" }}
             className="flex justify-center"
-            style={reducedEffects ? undefined : { perspective: 1000 }}
           >
-            {reducedEffects ? (
-              <img
-                src={dashboardImg}
-                alt="PLAYSPOT 원격 관리 대시보드"
-                loading="lazy"
-                decoding="async"
-                sizes="(max-width: 768px) 90vw, 540px"
-                width={800}
-                height={1024}
-                className={dashboardImgClass}
-              />
-            ) : (
-              <DashboardMockupTilt />
-            )}
+            <ManagementMockupCarousel />
           </motion.div>
         </div>
       </div>

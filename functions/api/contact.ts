@@ -68,7 +68,7 @@ const CARD = "#ffffff";
 const BORDER = "#e8e0e4";
 const MUTED = "#64748b";
 const TEXT = "#0f172a";
-const BOX_BG = "#fdf8fa";
+const BOX_BG = "#ffffff";
 
 /** 인라인 SVG를 data URI로 넣어 &lt;img&gt;로 표시 (본문 인라인 SVG는 많은 클라이언트에서 제거됨) */
 const MAIL_ICON_DATA_URI =
@@ -113,7 +113,7 @@ const buildInquiryEmailHtml = (
       <td align="center">
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};border-top:3px solid ${ACCENT};background:${CARD};box-shadow:0 12px 40px rgba(15,23,42,0.1),0 4px 14px rgba(15,23,42,0.06),0 0 1px rgba(15,23,42,0.08);">
           <tr>
-            <td style="padding:22px 28px 22px 28px;background:linear-gradient(180deg,#fffafc 0%,${CARD} 48%);border-bottom:1px solid ${BORDER};">
+            <td style="padding:22px 28px 22px 28px;background:${CARD};border-bottom:1px solid ${BORDER};">
               ${headerBrand}
               <h1 style="margin:14px 0 0 0;font-size:22px;font-weight:700;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.35;">
                 <span style="color:${TEXT};">새 </span><span style="color:${ACCENT};">창업 문의</span><span style="color:${TEXT};">가 도착했습니다</span><img src="${escapeAttr(mailIconSrc)}" alt="" width="26" height="22" style="display:inline-block;vertical-align:-4px;margin-left:10px;border:0;outline:none;" />
@@ -141,7 +141,7 @@ const buildInquiryEmailHtml = (
                 <tr>
                   <td colspan="2" style="padding:16px 20px 20px 20px;">
                     <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;padding-left:4px;">문의 내용</p>
-                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#fffefd;padding:16px 18px;border:1px solid rgba(255,28,92,0.14);white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
+                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:${CARD};padding:16px 18px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
                   </td>
                 </tr>
               </table>
