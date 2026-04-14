@@ -5,6 +5,11 @@ interface Env {
   MAIL_TO?: string;
   CONTACT_FROM_EMAIL?: string;
   MAIL_FROM?: string;
+  /** 예: https://intro.pages.dev — 설정 시 메일 헤더에 /playspot-logo.png 로고 표시 */
+  SITE_URL?: string;
+  PUBLIC_SITE_URL?: string;
+  /** 로고 전체 URL(선택). 있으면 SITE_URL 기본 경로보다 우선 */
+  MAIL_LOGO_URL?: string;
 }
 
 type ContactPayload = {
@@ -54,6 +59,8 @@ const escapeHtmlPreformatted = (s: string) =>
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 
+const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+
 /** Brand + light theme (메일 클라이언트 호환 인라인 스타일) */
 const BRAND = "#E42475";
 const BG_PAGE = "#eef2f7";
@@ -63,19 +70,27 @@ const MUTED = "#64748b";
 const TEXT = "#0f172a";
 const BOX_BG = "#f8fafc";
 
-const buildInquiryEmailHtml = (fields: {
-  name: string;
-  email: string;
-  company: string;
-  phone: string;
-  message: string;
-}) => {
+const buildInquiryEmailHtml = (
+  fields: {
+    name: string;
+    email: string;
+    company: string;
+    phone: string;
+    message: string;
+  },
+  logoUrl: string | null,
+) => {
   const { name, email, company, phone, message } = fields;
   const row = (label: string, value: string) => `
   <tr>
-    <td style="padding:12px 16px 12px 0;vertical-align:top;font-size:13px;color:${MUTED};width:120px;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;">${label}</td>
-    <td style="padding:12px 0;font-size:15px;color:${TEXT};font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;">${value}</td>
+    <td style="padding:12px 14px 12px 20px;vertical-align:top;font-size:13px;color:${MUTED};width:120px;font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;">${label}</td>
+    <td style="padding:12px 20px 12px 8px;font-size:15px;color:${TEXT};font-family:'Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.5;">${value}</td>
   </tr>`;
+
+  const headerBrand =
+    logoUrl && /^https?:\/\//i.test(logoUrl)
+      ? `<img src="${escapeAttr(logoUrl)}" alt="PLAY SPOT" height="32" style="display:block;border:0;outline:none;text-decoration:none;height:32px;width:auto;max-width:168px;" />`
+      : `<p style="margin:0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.9);font-family:'Noto Sans KR',sans-serif;">PLAY SPOT</p>`;
 
   return `<!DOCTYPE html>
 <html lang="ko">
@@ -91,8 +106,8 @@ const buildInquiryEmailHtml = (fields: {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};background:${CARD};box-shadow:0 4px 24px rgba(15,23,42,0.06);">
           <tr>
             <td style="padding:28px 28px 20px 28px;background:linear-gradient(135deg,${BRAND} 0%,#b91c5c 100%);">
-              <p style="margin:0;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.9);font-family:'Noto Sans KR',sans-serif;">PLAY SPOT</p>
-              <h1 style="margin:8px 0 0 0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.3;">새 창업 문의가 도착했습니다</h1>
+              ${headerBrand}
+              <h1 style="margin:12px 0 0 0;font-size:22px;font-weight:700;color:#ffffff;font-family:'Noto Sans KR',-apple-system,sans-serif;line-height:1.3;">새 창업 문의가 도착했습니다</h1>
             </td>
           </tr>
           <tr>
@@ -114,9 +129,9 @@ const buildInquiryEmailHtml = (fields: {
                 ${row("연락처", escapeHtml(phone))}
                 <tr><td colspan="2" style="border-top:1px solid ${BORDER};"></td></tr>
                 <tr>
-                  <td colspan="2" style="padding:16px 16px 20px 16px;">
-                    <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;">문의 내용</p>
-                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#ffffff;padding:16px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
+                  <td colspan="2" style="padding:16px 20px 20px 20px;">
+                    <p style="margin:0 0 8px 0;font-size:13px;color:${MUTED};font-family:'Noto Sans KR',sans-serif;padding-left:4px;">문의 내용</p>
+                    <div style="font-size:15px;color:${TEXT};font-family:'Noto Sans KR',sans-serif;line-height:1.65;border-radius:8px;background:#ffffff;padding:16px 18px;border:1px solid ${BORDER};white-space:pre-wrap;word-break:break-word;overflow-wrap:anywhere;">${escapeHtmlPreformatted(message)}</div>
                   </td>
                 </tr>
               </table>
@@ -143,6 +158,15 @@ const parseRecipients = (raw: string) =>
     .map((s) => s.trim())
     .filter((s) => s.length > 0)
     .filter((s) => isValidEmail(s));
+
+/** public/playspot-logo.png 가 사이트 루트에 올라가 있어야 함 */
+function resolveMailLogoUrl(env: Env): string | null {
+  const custom = (env.MAIL_LOGO_URL ?? "").trim();
+  if (custom && /^https?:\/\//i.test(custom)) return custom;
+  const base = (env.SITE_URL || env.PUBLIC_SITE_URL || "").trim().replace(/\/$/, "");
+  if (base && /^https?:\/\//i.test(base)) return `${base}/playspot-logo.png`;
+  return null;
+}
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
@@ -197,13 +221,17 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       message,
     ].join("\n");
 
-    const html = buildInquiryEmailHtml({
-      name,
-      email,
-      company: companyLine,
-      phone: phoneLine,
-      message,
-    });
+    const mailLogoUrl = resolveMailLogoUrl(env);
+    const html = buildInquiryEmailHtml(
+      {
+        name,
+        email,
+        company: companyLine,
+        phone: phoneLine,
+        message,
+      },
+      mailLogoUrl,
+    );
 
     const resendRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
