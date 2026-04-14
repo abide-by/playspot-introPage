@@ -63,9 +63,9 @@ const escapeAttr = (s: string) => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;
 
 /** 메일 본문 강조색·아이콘 (Lucide Mail 스타일 SVG에 동일 적용) */
 const ACCENT = "#FF1C5C";
-const BG_PAGE = "#f2eef1";
+const BG_PAGE = "#ffffff";
 const CARD = "#ffffff";
-const BORDER = "#e8e0e4";
+const BORDER = "#e8e8ec";
 const MUTED = "#64748b";
 const TEXT = "#0f172a";
 const BOX_BG = "#fdf8fa";
@@ -107,10 +107,10 @@ const buildInquiryEmailHtml = (
   <title>창업 문의</title>
 </head>
 <body style="margin:0;padding:0;background:${BG_PAGE};">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BG_PAGE};padding:32px 16px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:${BG_PAGE};padding:28px 16px 40px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};border-top:3px solid ${ACCENT};background:${CARD};box-shadow:0 4px 28px rgba(255,28,92,0.07),0 2px 12px rgba(15,23,42,0.05);">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;border:1px solid ${BORDER};border-top:3px solid ${ACCENT};background:${CARD};box-shadow:0 12px 40px rgba(15,23,42,0.1),0 4px 14px rgba(15,23,42,0.06),0 0 1px rgba(15,23,42,0.08);">
           <tr>
             <td style="padding:22px 28px 22px 28px;background:linear-gradient(180deg,#fffafc 0%,${CARD} 48%);border-bottom:1px solid ${BORDER};">
               ${headerBrand}

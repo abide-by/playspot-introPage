@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 /** 국내 사용 빈도 위주 (앞쪽일수록 먼저 제안) */
 const COMMON_EMAIL_DOMAINS = [
@@ -206,12 +207,15 @@ const FooterSection = () => {
     website: "",
   });
   const [emailFieldFocused, setEmailFieldFocused] = useState(false);
+  const [emailSuggestIndex, setEmailSuggestIndex] = useState(0);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
 
   /** 다이얼로그가 열릴 때마다 배너·이메일 추천 UI 초기화 */
   useEffect(() => {
     if (contactOpen) {
       setSubmitDone("idle");
       setEmailFieldFocused(false);
+      setEmailSuggestIndex(0);
     }
   }, [contactOpen]);
 
@@ -230,7 +234,54 @@ const FooterSection = () => {
     return matched.map((d) => `${email.slice(0, at)}@${d}`);
   }, [form.email]);
 
+  useEffect(() => {
+    setEmailSuggestIndex((i) => {
+      if (emailSuggestions.length === 0) return 0;
+      return Math.min(i, emailSuggestions.length - 1);
+    });
+  }, [emailSuggestions]);
+
   const showEmailDropdown = emailFieldFocused && emailSuggestions.length > 0;
+
+  function applyEmailSuggestion(full: string, moveToPhone: boolean) {
+    setForm((p) => ({ ...p, email: full }));
+    setEmailFieldFocused(false);
+    setEmailSuggestIndex(0);
+    if (moveToPhone) {
+      window.setTimeout(() => phoneInputRef.current?.focus(), 0);
+    }
+  }
+
+  function handleEmailKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    const list = emailSuggestions;
+    const open = emailFieldFocused && list.length > 0;
+    if (!open) return;
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setEmailSuggestIndex((i) => Math.min(i + 1, list.length - 1));
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setEmailSuggestIndex((i) => Math.max(i - 1, 0));
+      return;
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyEmailSuggestion(list[emailSuggestIndex] ?? list[0], false);
+      return;
+    }
+    if (e.key === "Tab" && !e.shiftKey) {
+      e.preventDefault();
+      applyEmailSuggestion(list[emailSuggestIndex] ?? list[0], true);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setEmailFieldFocused(false);
+    }
+  }
 
   const canSubmit =
     form.name.trim() &&
@@ -354,7 +405,11 @@ const FooterSection = () => {
                   id="contact-email"
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  onChange={(e) => {
+                    setForm((p) => ({ ...p, email: e.target.value }));
+                    setEmailSuggestIndex(0);
+                  }}
+                  onKeyDown={handleEmailKeyDown}
                   onFocus={() => setEmailFieldFocused(true)}
                   onBlur={() => {
                     window.setTimeout(() => setEmailFieldFocused(false), 180);
@@ -365,6 +420,9 @@ const FooterSection = () => {
                   aria-autocomplete="list"
                   aria-expanded={showEmailDropdown}
                   aria-controls={showEmailDropdown ? "contact-email-suggestions" : undefined}
+                  aria-activedescendant={
+                    showEmailDropdown ? `contact-email-option-${emailSuggestIndex}` : undefined
+                  }
                 />
                 {showEmailDropdown && (
                   <ul
@@ -372,15 +430,24 @@ const FooterSection = () => {
                     role="listbox"
                     className="absolute left-0 right-0 top-full z-[100] mt-1 max-h-52 overflow-auto rounded-md border border-border bg-popover text-popover-foreground shadow-md"
                   >
-                    {emailSuggestions.map((full) => (
-                      <li key={full} role="option" className="border-b border-border/60 last:border-b-0">
+                    {emailSuggestions.map((full, i) => (
+                      <li
+                        key={full}
+                        id={`contact-email-option-${i}`}
+                        role="option"
+                        aria-selected={i === emailSuggestIndex}
+                        className="border-b border-border/60 last:border-b-0"
+                      >
                         <button
                           type="button"
-                          className="w-full px-3 py-2.5 text-left text-sm hover:bg-muted/80 focus:bg-muted/80 focus:outline-none"
+                          className={cn(
+                            "w-full px-3 py-2.5 text-left text-sm hover:bg-muted/80 focus:bg-muted/80 focus:outline-none",
+                            i === emailSuggestIndex && "bg-muted/80",
+                          )}
+                          onMouseEnter={() => setEmailSuggestIndex(i)}
                           onMouseDown={(e) => {
                             e.preventDefault();
-                            setForm((p) => ({ ...p, email: full }));
-                            setEmailFieldFocused(false);
+                            applyEmailSuggestion(full, false);
                           }}
                         >
                           {full}
@@ -393,6 +460,8 @@ const FooterSection = () => {
               <div className="grid gap-1.5 text-left">
                 <label className="text-sm font-medium">연락처 *</label>
                 <Input
+                  ref={phoneInputRef}
+                  id="contact-phone"
                   type="tel"
                   inputMode="numeric"
                   autoComplete="tel"
