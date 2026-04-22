@@ -205,7 +205,7 @@ const FooterSection = () => {
               창업 문의하기
             </motion.button>
             <motion.a
-              href="https://playspot-guide.pages.dev/"
+              href="https://partner.playspot.co.kr/"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={reducedEffects ? undefined : { scale: 1.05 }}
